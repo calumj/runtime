@@ -471,7 +471,45 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 		}
 		return UnmarshalDeepObject(dest, paramName, queryParams)
 	case "spaceDelimited", "pipeDelimited":
-		return fmt.Errorf("query arguments of style '%s' aren't yet supported", style)
+
+		delimiter := " "
+		if style == "pipeDelimited" {
+			delimiter = "|"
+		}
+
+		values, found := queryParams[paramName]
+		if !found {
+			if required {
+				return fmt.Errorf("query parameter '%s' is required", paramName)
+			} else {
+				return nil
+			}
+		}
+		switch k {
+		case reflect.Slice:
+			if explode {
+				if err := bindSplitPartsToDestinationArray(values, output); err != nil {
+					return err
+				}
+			} else {
+				if len(values) != 1 {
+					return fmt.Errorf("parameter '%s' is not exploded, but is specified multiple times", paramName)
+				}
+
+				parts := strings.Split(values[0], delimiter)
+				if err := bindSplitPartsToDestinationArray(parts, output); err != nil {
+					return err
+				}
+			}
+
+			if extraIndirect {
+				dv.Set(reflect.ValueOf(output))
+			}
+		default:
+			return fmt.Errorf("'%s' objects must be slice", style)
+		}
+
+		return nil
 	default:
 		return fmt.Errorf("style '%s' on parameter '%s' is invalid", style, paramName)
 

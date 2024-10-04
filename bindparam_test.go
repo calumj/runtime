@@ -335,6 +335,55 @@ func TestBindQueryParameter(t *testing.T) {
 		assert.Equal(t, expected, birthday)
 	})
 
+	t.Run("spaceDelimited", func(t *testing.T) {
+
+		var got []int
+		expected := []int{20, 25, 50}
+
+		queryParams := url.Values{
+			"age": {"20 25 50"},
+		}
+		err := BindQueryParameter("spaceDelimited", false, false, "age", queryParams, &got)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, got)
+	})
+	t.Run("pipeDelimited", func(t *testing.T) {
+
+		var got []int
+		expected := []int{20, 25, 50}
+
+		queryParams := url.Values{
+			"age": {"20|25|50"},
+		}
+		err := BindQueryParameter("pipeDelimited", false, false, "age", queryParams, &got)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, got)
+	})
+	t.Run("spaceDelimited explode", func(t *testing.T) {
+
+		var got []int
+		expected := []int{20, 25, 50}
+
+		queryParams := url.Values{
+			"age": {"20", "25", "50"},
+		}
+		err := BindQueryParameter("spaceDelimited", true, false, "age", queryParams, &got)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, got)
+	})
+	t.Run("pipeDelimited explode", func(t *testing.T) {
+
+		var got []int
+		expected := []int{20, 25, 50}
+
+		queryParams := url.Values{
+			"age": {"20", "25", "50"},
+		}
+		err := BindQueryParameter("pipeDelimited", true, false, "age", queryParams, &got)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, got)
+	})
+
 	t.Run("optional", func(t *testing.T) {
 		queryParams := url.Values{
 			"time":   {"2020-12-09T16:09:53+00:00"},
